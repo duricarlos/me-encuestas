@@ -1,0 +1,73 @@
+{
+  "name": "Demo: tu experiencia",
+  "slug": "experiencia",
+  "definition": {
+    "version": 1,
+    "intro": {
+      "eyebrow": "2 minutos · 5 preguntas",
+      "title": "Queremos escuchar tu experiencia.",
+      "description": "Tus respuestas nos ayudan a entender qué funciona y qué podemos hacer más simple.",
+      "buttonLabel": "Empezar"
+    },
+    "questions": [
+      {
+        "id": "satisfaction",
+        "type": "rating",
+        "label": "¿Cómo valorarías tu experiencia general?",
+        "description": "1 es muy mala y 5 es excelente.",
+        "required": true,
+        "min": 1,
+        "max": 5
+      },
+      {
+        "id": "best-part",
+        "type": "single",
+        "label": "¿Qué parte te resultó más útil?",
+        "required": true,
+        "options": [
+          { "label": "La claridad", "value": "clarity" },
+          { "label": "La velocidad", "value": "speed" },
+          { "label": "La facilidad de uso", "value": "ease" },
+          { "label": "Otra cosa", "value": "other" }
+        ]
+      },
+      {
+        "id": "improvements",
+        "type": "multiple",
+        "label": "¿Qué te gustaría que mejoráramos?",
+        "description": "Puedes elegir más de una opción.",
+        "maxSelections": 3,
+        "options": [
+          { "label": "Más opciones", "value": "options" },
+          { "label": "Más información", "value": "information" },
+          { "label": "Más rapidez", "value": "speed" },
+          { "label": "Nada por ahora", "value": "nothing" }
+        ]
+      },
+      {
+        "id": "comment",
+        "type": "textarea",
+        "label": "Si pudieras cambiar una sola cosa, ¿cuál sería?",
+        "placeholder": "Escribe una idea, una historia o una observación...",
+        "required": false
+      },
+      {
+        "id": "contact",
+        "type": "email",
+        "label": "¿Quieres que te avisemos cuando haya novedades?",
+        "description": "Opcional. Solo usaremos tu correo para esta comunicación.",
+        "placeholder": "tu@email.com",
+        "required": false
+      }
+    ],
+    "thankYou": {
+      "eyebrow": "Respuesta recibida",
+      "title": "Gracias por compartirlo.",
+      "description": "Tu perspectiva ya forma parte de la siguiente mejora.",
+      "buttonLabel": "Volver al inicio"
+    },
+    "capture": {
+      "clientContext": true
+    }
+  }
+}
