@@ -63,3 +63,7 @@ npm run generate:types
 npm run seed
 npm run build
 ```
+
+## Licencia
+
+Este proyecto se publica bajo la licencia [MIT](LICENSE). El uso personal y comercial es gratuito; en usos comerciales debe conservarse el aviso de copyright y la atribución de Me Encuestas.

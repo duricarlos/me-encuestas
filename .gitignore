@@ -9,3 +9,5 @@ out
 tsconfig.tsbuildinfo
 payload-types.ts
 .codebase-memory/
+.vercel/
+.vercel
