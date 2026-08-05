@@ -27,6 +27,29 @@ const allowedOrigins = Array.from(
         ]),
   ]),
 )
+const databaseURLs = [
+  process.env.DATABASE_URL,
+  process.env.POSTGRES_URL,
+  process.env.POSTGRES_PRISMA_URL,
+  process.env.POSTGRES_URL_NON_POOLING,
+].filter((value): value is string => Boolean(value))
+const isHostedProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production'
+const isLocalDatabaseURL = (value: string) => {
+  try {
+    return ['localhost', '127.0.0.1', '::1'].includes(new URL(value).hostname)
+  } catch {
+    return false
+  }
+}
+const databaseURL = isHostedProduction
+  ? databaseURLs.find((value) => !isLocalDatabaseURL(value))
+  : databaseURLs[0] || 'postgresql://postgres:postgres@localhost:5432/me_encuestas'
+
+if (isHostedProduction && !databaseURL) {
+  throw new Error(
+    'No hay una URL de Postgres remota configurada. Define DATABASE_URL (o POSTGRES_URL) en producción; localhost no está disponible desde Vercel.',
+  )
+}
 
 export default buildConfig({
   serverURL: appURL,
@@ -41,8 +64,7 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || 'local-development-secret-change-me',
   db: postgresAdapter({
     pool: {
-      connectionString:
-        process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/me_encuestas',
+      connectionString: databaseURL,
     },
   }),
   typescript: {

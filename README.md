@@ -55,6 +55,8 @@ La ruta `POST /api/surveys/[id]/responses` valida las preguntas requeridas y gua
 
 La geolocalización del navegador no se solicita. Los datos de proveedor dependen del hosting y pueden quedar vacíos en local. Revisa consentimiento, retención y obligaciones legales antes de usar datos de producción.
 
+En producción, `DATABASE_URL` debe apuntar a un Postgres accesible desde el hosting. No uses `localhost` ni `127.0.0.1`; esos valores solo sirven para desarrollo local.
+
 ## MCP para revisar respuestas
 
 El proyecto expone un MCP en `POST /api/mcp`. Autentica con el usuario de Payload mediante su cookie de sesión, un JWT en `Authorization: Bearer <token>` o una API key generada desde el usuario en Payload.
