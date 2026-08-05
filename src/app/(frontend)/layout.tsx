@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { Analytics } from '@vercel/analytics/next'
 
 import './styles.css'
 
@@ -16,6 +17,7 @@ export default function FrontendLayout({ children }: { children: ReactNode }) {
     <html lang="es" suppressHydrationWarning>
       <body>
         <div className="site-frame">{children}</div>
+        <Analytics />
       </body>
     </html>
   )
