@@ -61,12 +61,12 @@ En producción, `DATABASE_URL` debe apuntar a un Postgres accesible desde el hos
 
 El proyecto expone un MCP en `POST /api/mcp`. Autentica con el usuario de Payload mediante su cookie de sesión, un JWT en `Authorization: Bearer <token>` o una API key generada desde el usuario en Payload.
 
-Cada encuesta tiene un `owner` relacionado con `Users`. Las encuestas creadas desde Payload se asignan automáticamente al usuario que las crea. La encuesta demo `experiencia` se asigna al primer usuario cuando se ejecuta `npm run seed` después de crear ese usuario.
+Cada encuesta tiene un `owner` relacionado con `Users`. Las encuestas creadas desde Payload se asignan automáticamente al usuario que las crea. La encuesta demo `experiencia` se asigna al primer usuario cuando se ejecuta `npm run seed` después de crear ese usuario. Los usuarios con rol `editor` solo pueden consultar sus encuestas; los usuarios `admin` también pueden consultar encuestas legacy creadas antes de añadir `owner`.
 
 El MCP ofrece estas herramientas:
 
-- `list_surveys`: lista las encuestas del usuario autenticado.
-- `get_survey_responses`: devuelve las respuestas de una encuesta propia, sin metadatos técnicos ni campos de preguntas de tipo email.
+- `list_surveys`: lista las encuestas accesibles para el usuario autenticado.
+- `get_survey_responses`: devuelve las respuestas de una encuesta accesible, sin metadatos técnicos ni campos de preguntas de tipo email.
 - `save_response_analysis`: guarda el resultado de una revisión en la colección `response-analyses`, enlazado a `Users`, `Surveys` y `Responses`.
 
 Para conectar un cliente MCP remoto, usa la URL pública `https://tu-dominio.com/api/mcp` y autentícalo con el JWT del usuario de Payload. En local, el login se puede obtener así:
@@ -79,7 +79,7 @@ curl -X POST http://localhost:3000/api/users/login \
 
 Para generar una API key, abre `/admin/collections/users`, edita el usuario, activa `Enable API Key` y pulsa `Generate`. El cliente MCP debe enviarla así: `Authorization: users API-Key <API_KEY>`.
 
-No guardes el token ni la API key en el repositorio. La IA solo podrá consultar encuestas cuyo `owner` coincida con el usuario autenticado.
+No guardes el token ni la API key en el repositorio. La IA respeta el alcance del usuario: los editores solo consultan encuestas cuyo `owner` coincide con ellos; los administradores pueden consultar también encuestas legacy sin propietario.
 
 ## Comandos
 

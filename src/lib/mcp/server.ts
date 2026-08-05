@@ -8,6 +8,7 @@ export type McpUser = {
   id: number
   email?: string
   name?: string
+  role?: 'admin' | 'editor'
 }
 
 type SurveyDocument = {
@@ -43,13 +44,15 @@ const errorResult = (message: string) => ({
 
 const getPayloadInstance = () => getPayload({ config })
 
-const findOwnedSurvey = async (user: McpUser, slug: string) => {
+const canReadAllSurveys = (user: McpUser) => user.role === 'admin'
+
+const findAccessibleSurvey = async (user: McpUser, slug: string) => {
   const payload = await getPayloadInstance()
   const result = await payload.find({
     collection: 'surveys',
-    where: {
-      and: [{ owner: { equals: user.id } }, { slug: { equals: slug } }],
-    },
+    where: canReadAllSurveys(user)
+      ? { slug: { equals: slug } }
+      : { and: [{ owner: { equals: user.id } }, { slug: { equals: slug } }] },
     depth: 0,
     limit: 1,
     overrideAccess: true,
@@ -78,7 +81,7 @@ export const createMcpServer = (user: McpUser) => {
     { name: 'me-encuestas', version: '0.1.0' },
     {
       instructions:
-        'Revisa únicamente encuestas propiedad del usuario autenticado. Antes de revisar respuestas, identifica la encuesta con list_surveys y usa get_survey_responses. Los correos y otros campos de tipo email se omiten por privacidad.',
+        'Revisa encuestas accesibles para el usuario autenticado. Los editores solo pueden revisar sus propias encuestas; los administradores también pueden revisar encuestas legacy sin propietario. Antes de revisar respuestas, identifica la encuesta con list_surveys y usa get_survey_responses. Los correos y otros campos de tipo email se omiten por privacidad.',
     },
   )
 
@@ -86,7 +89,8 @@ export const createMcpServer = (user: McpUser) => {
     'list_surveys',
     {
       title: 'Listar encuestas del usuario',
-      description: 'Devuelve las encuestas asignadas al usuario autenticado.',
+      description:
+        'Devuelve las encuestas asignadas al usuario autenticado. Un administrador también puede ver encuestas legacy sin propietario.',
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
@@ -94,7 +98,7 @@ export const createMcpServer = (user: McpUser) => {
       const payload = await getPayloadInstance()
       const result = await payload.find({
         collection: 'surveys',
-        where: { owner: { equals: user.id } },
+        ...(canReadAllSurveys(user) ? {} : { where: { owner: { equals: user.id } } }),
         depth: 0,
         limit: 100,
         sort: '-updatedAt',
@@ -121,7 +125,7 @@ export const createMcpServer = (user: McpUser) => {
     {
       title: 'Consultar respuestas de una encuesta',
       description:
-        'Devuelve respuestas anonimizadas de una encuesta propiedad del usuario. No incluye campos de tipo email ni metadatos técnicos.',
+        'Devuelve respuestas anonimizadas de una encuesta accesible para el usuario. No incluye campos de tipo email ni metadatos técnicos.',
       inputSchema: z.object({
         slug: z.string().min(1).describe('Slug público de la encuesta.'),
         limit: z.number().int().min(1).max(100).default(50),
@@ -129,8 +133,8 @@ export const createMcpServer = (user: McpUser) => {
       annotations: { readOnlyHint: true },
     },
     async ({ slug, limit }) => {
-      const { payload, survey } = await findOwnedSurvey(user, slug)
-      if (!survey) return errorResult('La encuesta no existe o no pertenece al usuario autenticado.')
+      const { payload, survey } = await findAccessibleSurvey(user, slug)
+      if (!survey) return errorResult('La encuesta no existe o no es accesible para el usuario autenticado.')
 
       const result = await payload.find({
         collection: 'responses',
@@ -183,8 +187,8 @@ export const createMcpServer = (user: McpUser) => {
       annotations: { destructiveHint: false },
     },
     async ({ slug, responseIds, title, summary, analysis, recommendations, model }) => {
-      const { payload, survey } = await findOwnedSurvey(user, slug)
-      if (!survey) return errorResult('La encuesta no existe o no pertenece al usuario autenticado.')
+      const { payload, survey } = await findAccessibleSurvey(user, slug)
+      if (!survey) return errorResult('La encuesta no existe o no es accesible para el usuario autenticado.')
 
       const uniqueResponseIds = [...new Set(responseIds)]
       const numericResponseIds = uniqueResponseIds.map(Number)
@@ -246,7 +250,12 @@ export const authenticateMcpRequest = async (request: Request) => {
 
   if (!user || typeof user !== 'object' || !('id' in user)) return null
 
-  const candidate = user as { id?: unknown; email?: unknown; name?: unknown }
+  const candidate = user as {
+    id?: unknown
+    email?: unknown
+    name?: unknown
+    role?: unknown
+  }
   if (typeof candidate.id !== 'string' && typeof candidate.id !== 'number') return null
   const userId = typeof candidate.id === 'number' ? candidate.id : Number(candidate.id)
   if (!Number.isSafeInteger(userId)) return null
@@ -257,6 +266,9 @@ export const authenticateMcpRequest = async (request: Request) => {
       id: userId,
       ...(typeof candidate.email === 'string' ? { email: candidate.email } : {}),
       ...(typeof candidate.name === 'string' ? { name: candidate.name } : {}),
+      ...(candidate.role === 'admin' || candidate.role === 'editor'
+        ? { role: candidate.role }
+        : {}),
     } satisfies McpUser,
   }
 }
