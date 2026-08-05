@@ -31,6 +31,16 @@ type ResponseDocument = {
   answers?: Record<string, unknown>
   completedAt?: string
   durationMs?: number
+  country?: string
+  region?: string
+  city?: string
+  server?: {
+    country?: unknown
+    region?: unknown
+    city?: unknown
+    latitude?: unknown
+    longitude?: unknown
+  }
 }
 
 const textResult = (value: unknown) => ({
@@ -76,12 +86,41 @@ const redactAnswers = (
   )
 }
 
+const safeLocationText = (value: unknown) =>
+  typeof value === 'string' && value.trim().length > 0 ? value : undefined
+
+const safeCoordinate = (value: unknown) => {
+  const coordinate = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(coordinate) ? coordinate : undefined
+}
+
+const getApproximateLocation = (response: ResponseDocument) => {
+  const server = response.server && typeof response.server === 'object' ? response.server : {}
+  const country = safeLocationText(response.country) || safeLocationText(server.country)
+  const region = safeLocationText(response.region) || safeLocationText(server.region)
+  const city = safeLocationText(response.city) || safeLocationText(server.city)
+  const latitude = safeCoordinate(server.latitude)
+  const longitude = safeCoordinate(server.longitude)
+
+  if (!country && !region && !city && latitude === undefined && longitude === undefined) {
+    return null
+  }
+
+  return {
+    ...(country ? { country } : {}),
+    ...(region ? { region } : {}),
+    ...(city ? { city } : {}),
+    ...(latitude !== undefined ? { latitude } : {}),
+    ...(longitude !== undefined ? { longitude } : {}),
+  }
+}
+
 export const createMcpServer = (user: McpUser) => {
   const server = new McpServer(
     { name: 'me-encuestas', version: '0.1.0' },
     {
       instructions:
-        'Revisa encuestas accesibles para el usuario autenticado. Los editores solo pueden revisar sus propias encuestas; los administradores también pueden revisar encuestas legacy sin propietario. Antes de revisar respuestas, identifica la encuesta con list_surveys y usa get_survey_responses. Los correos y otros campos de tipo email se omiten por privacidad.',
+        'Revisa encuestas accesibles para el usuario autenticado. Los editores solo pueden revisar sus propias encuestas; los administradores también pueden revisar encuestas legacy sin propietario. Antes de revisar respuestas, identifica la encuesta con list_surveys y usa get_survey_responses. Los correos y otros campos de tipo email se omiten por privacidad. Las respuestas pueden incluir ubicación aproximada (país, región, ciudad y coordenadas), pero nunca IP ni metadatos técnicos completos.',
     },
   )
 
@@ -125,7 +164,7 @@ export const createMcpServer = (user: McpUser) => {
     {
       title: 'Consultar respuestas de una encuesta',
       description:
-        'Devuelve respuestas anonimizadas de una encuesta accesible para el usuario. No incluye campos de tipo email ni metadatos técnicos.',
+        'Devuelve respuestas de una encuesta accesible para el usuario, con ubicación aproximada cuando está disponible. No incluye campos de tipo email, IP, user-agent ni metadatos técnicos completos.',
       inputSchema: z.object({
         slug: z.string().min(1).describe('Slug público de la encuesta.'),
         limit: z.number().int().min(1).max(100).default(50),
@@ -163,6 +202,7 @@ export const createMcpServer = (user: McpUser) => {
             completedAt: item.completedAt,
             durationMs: item.durationMs,
             answers: redactAnswers(item.answers, survey),
+            location: getApproximateLocation(item),
           }
         }),
       })

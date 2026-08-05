@@ -66,7 +66,7 @@ Cada encuesta tiene un `owner` relacionado con `Users`. Las encuestas creadas de
 El MCP ofrece estas herramientas:
 
 - `list_surveys`: lista las encuestas accesibles para el usuario autenticado.
-- `get_survey_responses`: devuelve las respuestas de una encuesta accesible, sin metadatos técnicos ni campos de preguntas de tipo email.
+- `get_survey_responses`: devuelve las respuestas de una encuesta accesible, incluyendo ubicación aproximada (país, región, ciudad y coordenadas cuando existen), sin IP, user-agent, metadatos técnicos completos ni campos de preguntas de tipo email.
 - `save_response_analysis`: guarda el resultado de una revisión en la colección `response-analyses`, enlazado a `Users`, `Surveys` y `Responses`.
 
 Para conectar un cliente MCP remoto, usa la URL pública `https://tu-dominio.com/api/mcp` y autentícalo con el JWT del usuario de Payload. En local, el login se puede obtener así:
