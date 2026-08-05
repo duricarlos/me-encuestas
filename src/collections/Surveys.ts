@@ -10,7 +10,7 @@ export const Surveys: CollectionConfig = {
   slug: 'surveys',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'status', 'updatedAt'],
+    defaultColumns: ['name', 'slug', 'owner', 'status', 'updatedAt'],
     description: 'Cada encuesta se define en JSON y se publica en /[slug].',
   },
   access: {
@@ -42,6 +42,15 @@ export const Surveys: CollectionConfig = {
       },
     },
     {
+      name: 'owner',
+      type: 'relationship',
+      relationTo: 'users',
+      index: true,
+      admin: {
+        description: 'Usuario que puede consultar esta encuesta mediante el MCP.',
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       required: true,
@@ -64,5 +73,16 @@ export const Surveys: CollectionConfig = {
         isDefinition(value) || 'La definición debe ser un objeto JSON con questions[].',
     },
   ],
+  hooks: {
+    beforeChange: [
+      ({ data, req }) => {
+        if (req.user && !data.owner) {
+          return { ...data, owner: req.user.id }
+        }
+
+        return data
+      },
+    ],
+  },
   timestamps: true,
 }

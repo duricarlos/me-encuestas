@@ -181,6 +181,7 @@ export async function POST(request: Request, context: RouteContext) {
     overrideAccess: true,
     data: {
       survey: survey.id,
+      owner: survey.owner || undefined,
       surveySlug: survey.slug,
       sessionId: body.sessionId || crypto.randomUUID(),
       answers,

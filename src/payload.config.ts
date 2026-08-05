@@ -5,6 +5,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { buildConfig } from 'payload'
 
 import { Responses } from './collections/Responses'
+import { ResponseAnalyses } from './collections/ResponseAnalyses'
 import { Surveys } from './collections/Surveys'
 import { Users } from './collections/Users'
 
@@ -35,7 +36,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Surveys, Responses],
+  collections: [Users, Surveys, Responses, ResponseAnalyses],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'local-development-secret-change-me',
   db: postgresAdapter({

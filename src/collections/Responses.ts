@@ -4,7 +4,7 @@ export const Responses: CollectionConfig = {
   slug: 'responses',
   admin: {
     useAsTitle: 'surveySlug',
-    defaultColumns: ['surveySlug', 'sessionId', 'completedAt', 'country'],
+    defaultColumns: ['surveySlug', 'owner', 'sessionId', 'completedAt', 'country'],
     description: 'Respuestas recibidas junto con contexto técnico y geográfico aproximado, sin almacenar la IP.',
   },
   access: {
@@ -21,6 +21,15 @@ export const Responses: CollectionConfig = {
       relationTo: 'surveys',
       required: true,
       index: true,
+    },
+    {
+      name: 'owner',
+      type: 'relationship',
+      relationTo: 'users',
+      index: true,
+      admin: {
+        description: 'Propietario de la encuesta a la que pertenece esta respuesta.',
+      },
     },
     {
       name: 'surveySlug',

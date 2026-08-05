@@ -12,9 +12,16 @@ const definition = JSON.parse(
 )
 
 const payload = await getPayload({ config })
+const firstUser = await payload.find({
+  collection: 'users',
+  limit: 1,
+  overrideAccess: true,
+})
+const defaultOwner = firstUser.docs[0]?.id
 const existing = await payload.find({
   collection: 'surveys',
   where: { slug: { equals: definition.slug } },
+  depth: 0,
   limit: 1,
   overrideAccess: true,
 })
@@ -28,6 +35,9 @@ if (existing.docs[0]) {
       slug: definition.slug,
       status: 'published',
       definition: definition.definition,
+      ...(existing.docs[0]?.owner || defaultOwner
+        ? { owner: existing.docs[0]?.owner || defaultOwner }
+        : {}),
     },
     overrideAccess: true,
   })
@@ -40,6 +50,7 @@ if (existing.docs[0]) {
       slug: definition.slug,
       status: 'published',
       definition: definition.definition,
+      ...(defaultOwner ? { owner: defaultOwner } : {}),
     },
     overrideAccess: true,
   })
